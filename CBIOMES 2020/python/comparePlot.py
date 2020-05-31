@@ -124,7 +124,7 @@ def plot_metrics(vars, corr, mse, evs):
     plt.title("Comparison Metrics")
     plt.ylabel("Scores")
     plt.xticks(rotation=90, fontsize=5)
-    plt.legend()
+    plt.legend(loc=3, prop={'size': 6})
     plt.tight_layout()
     plt.savefig("%smetrics.png" % figDir, dpi=300)
     plt.close()
@@ -138,7 +138,7 @@ def plot_metrics(vars, corr, mse, evs):
 
 
     
-species = "diatom"
+species = "syne"
 files = glob.glob("./data/%s/*.csv" % species)
 obsCol = 4   # observation values are at the fifth column (index 4)
 modCol = 6   # model values are at the seventh column 
@@ -175,19 +175,19 @@ for fIndex, fName in enumerate(files):
     if fIndex == len(files)-1:
         plot_metrics(obsVars, corr, mse, evs)     
 
-    title = varName
-    hist(df.iloc[:, [obsCol, modCol]], title)
-    xColLabel = "time"
+    # title = varName
+    # hist(df.iloc[:, [obsCol, modCol]], title)
+    # xColLabel = "time"
 
 
-    # if fName.find("tblSeaFlow") != -1: continue
-    plot_double_axis(
-                    x=df[xColLabel], 
-                    obs=df.iloc[:, [obsCol]], 
-                    mod=df.iloc[:, [modCol]], 
-                    xLabel=xColLabel, 
-                    obsLabel=df.columns[obsCol] + df.iloc[0, 5], 
-                    modLabel=df.columns[modCol] + df.iloc[0, 8], 
-                    title=title
-                    )                             
+    # if fName.find("tblSeaFlow") != -1: continue  # takes long time to plot seaflow data
+    # plot_double_axis(
+    #                 x=df[xColLabel], 
+    #                 obs=df.iloc[:, [obsCol]], 
+    #                 mod=df.iloc[:, [modCol]], 
+    #                 xLabel=xColLabel, 
+    #                 obsLabel=df.columns[obsCol] + df.iloc[0, 5], 
+    #                 modLabel=df.columns[modCol] + df.iloc[0, 8], 
+    #                 title=title
+    #                 )                             
 

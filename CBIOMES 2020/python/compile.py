@@ -6,24 +6,6 @@ from simpleLocalizer import localizer
 
 
 
-def check_vars(vars, species, secondaryKeyword):
-    """ 
-    Check if any variable in CMAP matches the search keywords.
-
-    Paratmeters:
-    ================
-    :param list vars: list of detected variables matching the keywords.
-    :param str species: partial or full name of an species (example: "proch"). 
-    :param str secondaryKeyword: any other keywords (separated by blank space).
-    """
-
-    if len(vars) < 1: 
-        print("No matching entry for: %s %s" % (species, secondaryKeyword))
-        sys.exit()
-    
-
-
-
 def filter_vars(api, species, secondaryKeyword):    
     """ 
     Search the catalog and return variables matching the keywords.
@@ -36,10 +18,10 @@ def filter_vars(api, species, secondaryKeyword):
     """
 
     vars = api.search_catalog("%s %s" % (species, secondaryKeyword))
-    check_vars(vars, species, secondaryKeyword)
-    vars = vars[vars["Variable"].str.contains(species, case=False)]
-    check_vars(vars, species, secondaryKeyword)
-    print("\n\n\n******** The following %s variables identified ********\n" % len(vars))
+    if len(vars) < 1: 
+        print("No matching entry for: %s %s" % (species, secondaryKeyword))
+        sys.exit()
+    print("\n\n\n******** The following %d variables identified ********\n" % len(vars))
     print(vars[["Table_Name", "Variable", "Unit"]].to_string(index=False))
     print("\n******************************************************\n\n\n")
     return vars
@@ -91,6 +73,8 @@ def compiler(species, secondaryKeyword, targetTable, targetVariable):
     dataDir = "./data/"
     if not os.path.exists(dataDir): os.makedirs(dataDir)
     for i in range(len(vars)):
+        if vars.iloc[i].Variable.find('_quality') != -1 or vars.iloc[i].Variable.find('_stdev') != -1: continue
+
         print("Downloading: (Table:%s,  Variable: %s)" % (vars.iloc[i].Table_Name, vars.iloc[i].Variable))
         tic = time.perf_counter()
         data = fetch_var(api, vars.iloc[i].Table_Name, vars.iloc[i].Variable)
@@ -99,15 +83,15 @@ def compiler(species, secondaryKeyword, targetTable, targetVariable):
             print("______________________________\n")            
             data["Unit"] = "[" + vars.iloc[i]["Unit"] + "]" if isinstance(vars.iloc[i]["Unit"], str) else "" 
 
-            data = localizer(
-                            source=data, 
-                            targetTable=targetTable, 
-                            targetVariable=targetVariable, 
-                            timeTolerance=2, 
-                            latTolerance=0.5, 
-                            lonTolerance=0.5, 
-                            depthTolerance=5
-                            )
+            # data = localizer(
+            #                 source=data, 
+            #                 targetTable=targetTable, 
+            #                 targetVariable=targetVariable, 
+            #                 timeTolerance=2, 
+            #                 latTolerance=0.5, 
+            #                 lonTolerance=0.5, 
+            #                 depthTolerance=5
+            #                 )
 
             data.to_csv("%s%s_%s.csv" % (dataDir, vars.iloc[i]["Table_Name"], vars.iloc[i]["Variable"]), index=False)
 
