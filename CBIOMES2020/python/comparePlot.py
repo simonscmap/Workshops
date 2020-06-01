@@ -138,7 +138,7 @@ def plot_metrics(vars, corr, mse, evs):
 
 
     
-species = "syne"
+species = "proch"
 files = glob.glob("./data/%s/*.csv" % species)
 obsCol = 4   # observation values are at the fifth column (index 4)
 modCol = 6   # model values are at the seventh column 
