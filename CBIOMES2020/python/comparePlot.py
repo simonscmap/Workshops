@@ -345,11 +345,15 @@ def make_dataset_figures(obsCol, modCol, files, figDir):
 
 
 if __name__ == "__main__":
-    species = "syne"
+    species = "proch"
     files = glob.glob("./data/%s/*.csv" % species)
     obsCol = 4   # observation values are at the fifth column (index 4)
     modCol = 6   # model values are at the seventh column 
     figDir = "./fig/"
     if not os.path.exists(figDir): os.makedirs(figDir)
+
+    # stack all data and then compare with Darwin
     stacked_figures(obsCol, modCol, files, figDir)
-    # make_dataset_figures(obsCol, modCol, files, figDir)
+
+    # compare the observation datasets with Darwin individually 
+    make_dataset_figures(obsCol, modCol, files, figDir)
