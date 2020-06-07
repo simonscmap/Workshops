@@ -68,6 +68,8 @@ def compiler(species, secondaryKeyword, targetTable, targetVariable):
     :param string targetVariable: the name of the variable to be matched with the compiled observations.
     """
     
+    ### you need to pass your API key here: 
+    ### api = pycmap.API("your api key") 
     api = pycmap.API()    
     vars = filter_vars(api, species, secondaryKeyword)
     dataDir = "./data/"
