@@ -6,12 +6,13 @@ from dateutil.parser import parse
 
 
 
-def localizer(source, targetTable, targetVariable, timeTolerance, latTolerance, lonTolerance, depthTolerance):
+def localizer(api, source, targetTable, targetVariable, timeTolerance, latTolerance, lonTolerance, depthTolerance):
     """
     Match the observation values with traget datastet within the tolerance parameters. 
 
     Paratmeters:
     ================
+    :param obj api: an instance of CMAP API.
     :param dataframe source: the source (observation) dataset.
     :param string targetTable: the name of the target table to be matched with source.
     :param string targetVariable: the name of the target variable to be matched with source.
@@ -38,9 +39,7 @@ def localizer(source, targetTable, targetVariable, timeTolerance, latTolerance, 
                     )
 
 
-    api = pycmap.API() 
     targetCoverage = api.get_var_coverage(targetTable, targetVariable)
-
     targetUnit = api.get_unit(targetTable, targetVariable)
     targetVariableSTD = targetVariable + "_std"
     source[targetVariable], source[targetVariableSTD], source["target_unit"] = None, None, None

@@ -5,7 +5,6 @@ from sklearn import preprocessing
 from sklearn.metrics import mean_squared_error, explained_variance_score
 import matplotlib.pyplot as plt
 
-# %matplotlib inline
 
 
 def normalize(vec, MinMax=True):    

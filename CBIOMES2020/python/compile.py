@@ -54,7 +54,7 @@ def fetch_var(api, tableName, varName):
 
 
 
-def compiler(species, secondaryKeyword, targetTable, targetVariable):
+def compiler(api, species, secondaryKeyword, targetTable, targetVariable):
     """ 
     Retrieves all records of a variable (varName) within a dataset (tableName).
     Refuse to retrieve if the dataset has more than a max threshold number of records (150k).
@@ -62,15 +62,13 @@ def compiler(species, secondaryKeyword, targetTable, targetVariable):
 
     Paratmeters:
     ================
+    :param obj api: an instance of CMAP API.
     :param str species: partial or full name of an species (examples: "proch", "syn"). 
     :param str secondaryKeyword: any other keywords (separated by blank space).
     :param string targetTable: the name of the table to be matched with the compiled observations.
     :param string targetVariable: the name of the variable to be matched with the compiled observations.
     """
     
-    ### you need to pass your API key here: 
-    ### api = pycmap.API("your api key") 
-    api = pycmap.API()    
     vars = filter_vars(api, species, secondaryKeyword)
     dataDir = "./data/"
     if not os.path.exists(dataDir): os.makedirs(dataDir)
@@ -86,6 +84,7 @@ def compiler(species, secondaryKeyword, targetTable, targetVariable):
             data["Unit"] = "[" + vars.iloc[i]["Unit"] + "]" if isinstance(vars.iloc[i]["Unit"], str) else "" 
 
             # data = localizer(
+            #                 api=api,   
             #                 source=data, 
             #                 targetTable=targetTable, 
             #                 targetVariable=targetVariable, 
@@ -101,8 +100,21 @@ def compiler(species, secondaryKeyword, targetTable, targetVariable):
 
 
 
+
+###########################################
+#                                         # 
+#                  main                   # 
+#                                         # 
+###########################################
+
+
+
 if __name__ == "__main__":
+    ### pass your API key here (only once is enough): 
+    ### api = pycmap.API("your api key") 
+    api = pycmap.API()    
     compiler(
+            api=api,
             species="proch",  
             secondaryKeyword="abun",
             targetTable="tblDarwin_Phytoplankton", 
