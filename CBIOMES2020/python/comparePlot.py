@@ -204,16 +204,17 @@ def stackFiles(obsCol, modCol, files):
 
 def plot_aggregated_err_by_depth(df, figDir):
     depth = [0, 5, 10, 20, 40, 100, 200, 500, 1000, 5000]
-    xs, errs, samples = [], [], []
+    xs, errs, samples, errs_std = [], [], [], []
     for i in range(1, len(depth)):
         sub = df.query("depth>=%f and depth<%f" % (depth[i-1], depth[i]))
         if len(sub) < 1: continue
         errs.append(sub.err.mean())
+        errs_std.append(sub.err.std())
         xs.append("%d_%d" % (depth[i-1], depth[i]))
         samples.append(len(sub))
     plt.clf()
     _, ax1 = plt.subplots()
-    ax1.plot(xs, errs, "bo", zorder=0)
+    ax1.errorbar(xs, errs, errs_std, marker="o", ls="none", capsize=2, elinewidth=1, zorder=0)
     ax1.tick_params(axis="y", labelcolor='b') 
     ax1.set_xlabel("depth [m]")
     ax1.set_ylabel("obs - model", color='b')
@@ -234,16 +235,17 @@ def plot_aggregated_err_by_depth(df, figDir):
 
 def plot_aggregated_err_by_lat(df, figDir):
     lat = np.arange(-90, 90.1, 10)
-    xs, errs, samples = [], [], []
+    xs, errs, samples, errs_std = [], [], [], []
     for i in range(1, len(lat)):
         sub = df.query("lat>=%f and lat<%f" % (lat[i-1], lat[i]))
         if len(sub) < 1: continue
         errs.append(sub.err.mean())
+        errs_std.append(sub.err.std())
         xs.append("%d_%d" % (lat[i-1], lat[i]))
         samples.append(len(sub))
     plt.clf()
     _, ax1 = plt.subplots()
-    ax1.plot(xs, errs, "bo", zorder=0)
+    ax1.errorbar(xs, errs, errs_std, marker="o", ls="none", capsize=2, elinewidth=1, zorder=0)
     ax1.tick_params(axis="y", labelcolor='b') 
     ax1.set_xlabel("latitude [deg]")
     ax1.set_ylabel("obs - model", color='b')
@@ -264,11 +266,12 @@ def plot_aggregated_err_by_lat(df, figDir):
 def plot_aggregated_err_by_month(df, figDir):
     df["month"] = pd.to_datetime(df["time"]).dt.month
     df = df.query("lat>=0")
-    df = df.groupby("month").agg({"lat": "size", "err": "mean"}).rename(columns={"lat": "count", "err": "err"}).reset_index()
+    df = df.assign(err_std=df["err"])
+    df = df.groupby("month").agg({"lat": "size", "err": "mean", "err_std": "std"}).rename(columns={"lat": "count", "err": "err", "err_std": "err_std"}).reset_index()
 
     plt.clf()
     _, ax1 = plt.subplots()
-    ax1.plot(df.month, df.err, "bo", zorder=0)
+    ax1.errorbar(df.month, df.err, df.err_std, marker="o", ls="none", capsize=2, elinewidth=1, zorder=0)
     ax1.tick_params(axis="y", labelcolor='b') 
     ax1.set_xlabel("month")
     ax1.set_ylabel("obs - model", color='b')
