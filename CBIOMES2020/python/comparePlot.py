@@ -1,8 +1,10 @@
 import os, glob
 import numpy as np
 import pandas as pd
+from math import log2
 from sklearn import preprocessing
 from sklearn.metrics import mean_squared_error, explained_variance_score
+from scipy.spatial.distance import rel_entr, cosine, jensenshannon
 import matplotlib.pyplot as plt
 
 
@@ -125,24 +127,48 @@ def hist(df, title, figDir):
 
 
 
-def plot_metrics(vars, corr, mse, evs, figDir):
+def plot_metrics(vars, corr, mse, evs, JS, KL, cos, figDir):
     """
-    Make a histogram plot comparing the density distributions of model and observation data.
-    The histograms are superimposed by Kernel Density Estimate (KDE) plots computed by Gaussian kernels.
+    Compare the model and observation values and score their similarity 
+    using distance (or divergence) metrics.
 
     Paratmeters:
     ================
-    :param array x: x-axis values.
+    :param array vars: variable names.
+    :param array corr: spearsman correlation coefficients.
+    :param array mse: mean squared error.
+    :param array JS: Jensen-Shannon distance score. 0: identical, 1: maximally different.
+    
     """
 
+    df = pd.DataFrame(vars, columns =["vars"])
+    df["corr"] = corr 
+    df["mse"] = mse
+    df["JS"] = JS 
+    df["KL"] = KL
+    df["cos"] = cos
+    df.sort_values(by="mse", inplace=True, ascending=False)
+    vars = df["vars"]
+    corr = df["corr"]
+    mse = df["mse"]
+    JS = df["JS"]
+    KL = df["KL"]
+    cos = df["cos"]
+
+
+    lw = 1    
     plt.clf()
-    plt.plot(vars, corr, '-o', label="Spearman Correlation Coefficient")
-    plt.plot(vars, mse, '-o', label="Mean Squared Error")
-    # plt.plot(vars, evs, '-.', label="Explained Variance Score")
+    plt.plot(vars, mse, '-o', lw=lw, label="Mean Squared Error")
+    plt.plot(vars, corr, '-o', lw=lw, label="Spearman Correlation Coefficient")
+    # plt.plot(vars, evs, '-.', lw=lw, label="Explained Variance Score")
+    plt.plot(vars, JS, '-o', lw=lw, label="Jensen-Shannon Distance")
+    plt.plot(vars, KL, '-o', lw=lw, label="Kullback-Leibler Divergence")
+    plt.plot(vars, cos, '-o', lw=lw, label="Cosine Distance")
+
     plt.title("Comparison Metrics")
     plt.ylabel("Scores")
-    plt.xticks(rotation=90, fontsize=5)
-    plt.legend(loc=3, prop={'size': 6})
+    plt.xticks(rotation=90, fontsize=4)
+    plt.legend(loc=4, prop={'size': 6})
     plt.tight_layout()
     plt.savefig("%smetrics.png" % figDir, dpi=300)
     plt.close()
@@ -269,6 +295,29 @@ def stacked_figures(obsCol, modCol, files, figDir):
     return
 
 
+def pdf(dist):
+    dist = np.array(dist)
+    return dist / np.sum(dist)
+
+
+def jensen_shannon(p, q):
+    """ Compute Jensen Shannon distance. """
+    p, q = pdf(p), pdf(q)
+    return jensenshannon(p, q, base=2)
+
+
+def kld(p, q):
+    """ Kullback-Leibler divergence. """
+    p, q = pdf(p), pdf(q)
+    # return sum(rel_entr(p, q))
+    # return sum(p[i] * log2(p[i]/q[i]) for i in range(len(p)))
+
+
+def cosine_distance(p, q):
+    """ Compute Jensen Shannon distance. """
+    p, q = pdf(p), pdf(q)
+    return cosine(p, q)
+
 
 def make_dataset_figures(obsCol, modCol, files, figDir):
     """
@@ -284,8 +333,8 @@ def make_dataset_figures(obsCol, modCol, files, figDir):
     :param list x: list of file names where the observation and model data are stored.
     """
 
-    obsVars, corr, mse, evs = [], [], [], []
-    for fIndex, fName in enumerate(files):
+    obsVars, corr, mse, evs, JS, KL, cos = [], [], [], [], [], [], []
+    for fName in files:
         print(fName)
         df = pd.read_csv(fName)    
         varName = os.path.splitext(os.path.basename(fName))[0]
@@ -298,21 +347,24 @@ def make_dataset_figures(obsCol, modCol, files, figDir):
         df = normalize_obs_model(df, obsCol, modCol)
 
         obsVars.append(varName)
-        ## data-model correlation
-        corr.append(df.iloc[:, [obsCol, modCol]].corr(method="spearman").iloc[0, 1])
         ## mse
         mse.append(mean_squared_error(df.iloc[:, [obsCol]], df.iloc[:, [modCol]]))
+        ## data-model correlation
+        corr.append(df.iloc[:, [obsCol, modCol]].corr(method="spearman").iloc[0, 1])
         ## explained_variance_score
         evs.append(explained_variance_score(df.iloc[:, [obsCol]], df.iloc[:, [modCol]]))
-
-        if fIndex == len(files)-1:
-            plot_metrics(obsVars, corr, mse, evs, figDir)     
+        ## JS
+        JS.append(jensen_shannon(df.iloc[:, [modCol]], df.iloc[:, [obsCol]]))
+        ## kld
+        KL.append(kld(df.iloc[:, [modCol]], df.iloc[:, [obsCol]]))
+        ## cosine
+        cos.append(cosine_distance(df.iloc[:, [modCol]], df.iloc[:, [obsCol]]))
 
         title = varName
         hist(df.iloc[:, [obsCol, modCol]], title, figDir)
         xColLabel = "time"
 
-        if fName.find("tblSeaFlow") != -1: continue  # takes long time to plot seaflow data
+        if fName.find("tblSeaFlow") != -1: continue  # takes long time to plot seaflow data!
         plot_double_axis(
                         x=df[xColLabel], 
                         obs=df.iloc[:, [obsCol]], 
@@ -323,7 +375,7 @@ def make_dataset_figures(obsCol, modCol, files, figDir):
                         title=title,
                         figDir=figDir
                         )                             
-
+    plot_metrics(obsVars, corr, mse, evs, JS, KL, cos, figDir) 
 
 
 
