@@ -1,0 +1,15 @@
+# Create and activate the environment:
+#   conda env create -f environment.yml
+#   conda activate bci
+name: bci
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11
+  - jupyterlab
+  - matplotlib
+  - cartopy
+  - scipy
+  - pip
+  - pip:
+      - pycmap
